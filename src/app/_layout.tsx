@@ -11,6 +11,7 @@ import {
 } from '@expo-google-fonts/instrument-sans';
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
+import '../../global.css';
 
 SplashScreen.preventAutoHideAsync();
 

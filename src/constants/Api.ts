@@ -1,0 +1,1 @@
+export const API_BASE_URL = __DEV__ ? "http://localhost:8080/api/v1" : "https://api.example.com";

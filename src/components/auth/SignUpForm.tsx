@@ -1,9 +1,13 @@
 import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 
 import { useTheme } from "@/hooks/useTheme";
+import { registerUser } from "@/services/authService";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Toast } from "react-native-toast-message/lib/src/Toast";
+
+import { useRouter } from "expo-router";
 import FormInput from "../ui/InputFieldsForm";
 import PrimaryButton from "../ui/PrimaryButton";
 import { AuthTab } from "./AuthTabSwitcher";
@@ -27,13 +31,24 @@ export default function SignUpForm({ style, onChange }: Props) {
         handleSubmit,
         watch,
         formState: { errors },
-    } = useForm<RegisterFormData>();
+    } = useForm<RegisterFormData>(
+        {
+            defaultValues: {
+                email: '',
+                password: '', 
+                confirmPassword: '',
+            },
+        }
+    );
+    const router = useRouter();
     const [isErrorLength, setIsErrorLength] = useState(true);
     const [isErrorCapital, setIsErrorCapital] = useState(true);
     const [isErrorNumber, setIsErrorNumber] = useState(true);
     const [isErrorSpecial, setIsErrorSpecial] = useState(true);
     const [isErrorLower, setIsErrorLower] = useState(true);
     const [isPasswordTouched, setIsPasswordTouched] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState<string | null>(null);
 
     const { colors } = useTheme();
     const styles = createStyles(colors);
@@ -46,7 +61,7 @@ export default function SignUpForm({ style, onChange }: Props) {
     }, [watch('password')])
 
     const validatePassword = (password: string): boolean => {
-        
+
         var minLength = 8;
         var hasUpperCase = /[A-Z]/.test(password);
         var hasLowerCase = /[a-z]/.test(password);
@@ -74,16 +89,42 @@ export default function SignUpForm({ style, onChange }: Props) {
         onChange('login');
     }
 
-    const onSubmit = (data: RegisterFormData) => {
+    const onSubmit = async (data: RegisterFormData) => {
         console.log(data);
+        setApiError(null);
+        setIsLoading(true);
+        try {
+            const result = await registerUser({
+                email: data.email,
+                password: data.password,
+            });
+
+            console.log('Register success:', result);
+            // Simpan token, navigate ke home, dll.
+            Toast.show({
+                type: 'success',
+                text1: 'Account created successfully!',
+                text2: 'Welcome to SplitIt 🎉',
+            });
+            router.push('/(auth)/onboarding');
+
+        } catch (error: any) {
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to create account',
+                text2: error.message || 'Try again in a few moments.',
+                autoHide: false,
+                swipeable: true,
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
-
-
 
 
     return (
         <View style={style}>
-            <View style={styles.fullNameContainer}>
+            {/* <View style={styles.fullNameContainer}>
                 <FormInput
                     control={control}
                     name="firstName"
@@ -112,7 +153,7 @@ export default function SignUpForm({ style, onChange }: Props) {
                     leftIcon="person-outline"
                     error={errors.lastName?.message}
                 />
-            </View>
+            </View> */}
             <FormInput
                 control={control}
                 name="email"
@@ -157,7 +198,7 @@ export default function SignUpForm({ style, onChange }: Props) {
                     </View>
                 </View>
             )}
-            
+
             <FormInput
                 control={control}
                 name="confirmPassword"
@@ -170,7 +211,7 @@ export default function SignUpForm({ style, onChange }: Props) {
                 secureText={true}
                 leftIcon="lock-closed-outline"
                 error={errors.confirmPassword?.message}
-            />  
+            />
             <PrimaryButton label="Buat Akun Gratis ✦" onPress={handleSubmit(onSubmit)} style={{ marginTop: 16 }} variant="amber" fullWidth />
 
             <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16 }}>
